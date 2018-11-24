@@ -29,15 +29,13 @@
     return arrowImage;
 }
 
-+ (NSString *)mj_localizedStringForKey:(NSString *)key
-{
-    return [self mj_localizedStringForKey:key value:nil];
-}
+static NSBundle *languageBundle = nil;
 
-+ (NSString *)mj_localizedStringForKey:(NSString *)key value:(NSString *)value
-{
-    static NSBundle *bundle = nil;
-    if (bundle == nil) {
++ (void)mj_refreshLanguageBundle:(NSString *)language {
+    NSBundle *bundle = [NSBundle bundleWithPath:[[NSBundle
+                                                  mj_refreshBundle] pathForResource:language
+                                                 ofType:@"lproj"]];
+    if (nil == bundle) {
         // （iOS获取的语言字符串比较不稳定）目前框架只处理en、zh-Hans、zh-Hant三种情况，其他按照系统默认处理
         NSString *language = [NSLocale preferredLanguages].firstObject;
         if ([language hasPrefix:@"en"]) {
@@ -55,7 +53,20 @@
         // 从MJRefresh.bundle中查找资源
         bundle = [NSBundle bundleWithPath:[[NSBundle mj_refreshBundle] pathForResource:language ofType:@"lproj"]];
     }
-    value = [bundle localizedStringForKey:key value:value table:nil];
+    languageBundle = bundle;
+}
+
++ (NSString *)mj_localizedStringForKey:(NSString *)key
+{
+    return [self mj_localizedStringForKey:key value:nil];
+}
+
++ (NSString *)mj_localizedStringForKey:(NSString *)key value:(NSString *)value
+{
+    if (languageBundle == nil) {
+        [self mj_refreshLanguageBundle:nil];
+    }
+    value = [languageBundle localizedStringForKey:key value:value table:nil];
     return [[NSBundle mainBundle] localizedStringForKey:key value:value table:nil];
 }
 @end
